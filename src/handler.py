@@ -2,7 +2,6 @@ import json
 import os
 import dateparser
 from pymongo import MongoClient
-from bson.json_util import dumps
 
 db_uri = os.environ.get("MONGO_DB_URI", "localhost")
 db_name = os.environ.get("MONGO_DB_NAME", "new_hire_test")
@@ -57,9 +56,10 @@ def handle_csv_upload(event, context):
             response_body["errors"].append(
                 "Salary must be a valid number, recieved: " + employee[3])
 
-        try:
-            emp_record["hire_date"] = dateparser.parse(employee[4])
-        except:
+        hire_date = dateparser.parse(employee[4])
+        if hire_date:
+            emp_record["hire_date"] = hire_date
+        else:
             response_body["errors"].append(
                 "Hire date must be a valid date, recieved: " + employee[4])
 
@@ -81,9 +81,12 @@ def handle_csv_upload(event, context):
             emp_id = db.user.insert(emp_record)
             response_body["numCreated"] = response_body["numCreated"] + 1
 
+        # update the chain of command
         manager_coc_query = {"user_id": mgr_id}
         mgr_coc_obj = db.chain_of_command.find_one(manager_coc_query)
 
+        # if there is a manager, update or insert as needed
+        #     otherwise, insert the records with no chain of command
         if mgr_coc_obj:
             mgr_coc = mgr_coc_obj.get("chain_of_command")
             coc_record = None

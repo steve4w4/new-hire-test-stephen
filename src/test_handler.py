@@ -171,3 +171,36 @@ John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
         {"user_id": john["_id"]})
     assert(len(john_chain_of_command["chain_of_command"]) == 1)
     assert(john_chain_of_command["chain_of_command"][0] == brad["_id"])
+
+
+
+@dummy_data_decorator
+def test_invalid_date():
+    '''
+    This test should still update Brad and create John, but should return
+    a single error because the salary field for Brad isn't a number
+    '''
+
+    body = '''Name,Email,Manager,Salary,Hire Date
+Bradley Jones,bjones@performyard.com,,100000,NOT A DATE
+John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
+'''
+
+    response = handle_csv_upload(body, {})
+    assert(response["statusCode"] == 200)
+    body = json.loads(response["body"])
+
+    # Check the response counts
+    assert(body["numCreated"] == 1)
+    assert(body["numUpdated"] == 1)
+    assert(len(body["errors"]) == 1)
+
+    # Check that we added the correct number of users
+    assert(db.user.count() == 3)
+    assert(db.chain_of_command.count() == 3)
+
+    # Check that Brad's hire date was not updated, but other fields were
+    brad = db.user.find_one({"normalized_email": "bjones@performyard.com"})
+    assert(brad["hire_date"] == datetime.datetime(2010, 2, 10))
+    assert(brad["salary"] == 100000)
+    assert(brad["name"] == "Bradley Jones")
