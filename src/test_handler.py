@@ -9,7 +9,7 @@ from bson import ObjectId
 def dummy_data_decorator(test_function):
     def f():
         '''
-        Drop any existing data and fill in some dummy test data,
+          Drop any existing data and fill in some dummy test data,
         as well as creating indexes; the data will be dropped after
         the test as well
         '''
@@ -55,7 +55,8 @@ def dummy_data_decorator(test_function):
 
         dummy_chain_of_commands = [
             {"user_id": dummy_users[0]["_id"], "chain_of_command":[]},
-            {"user_id": dummy_users[1]["_id"], "chain_of_command":[dummy_users[0]]},
+            {"user_id": dummy_users[1]["_id"], "chain_of_command":[
+                dummy_users[0].get("_id")]},
         ]
 
         for chain_of_command in dummy_chain_of_commands:
