@@ -89,18 +89,18 @@ def handle_csv_upload(event, context):
         #     otherwise, insert the records with no chain of command
         if mgr_coc_obj:
             mgr_coc = mgr_coc_obj.get("chain_of_command")
-            coc_record = None
+            new_coc = None
             if mgr_id:
-                coc_record = [mgr_id] + mgr_coc
+                new_coc = [mgr_id] + mgr_coc
 
             if emp_match:
                 db.chain_of_command.update_one({"user_id": emp_id}, {
-                    "$set": {"chain_of_command": [coc_record]}
+                    "$set": {"chain_of_command": [new_coc]}
                 })
             else:
                 coc_record = {
                     "user_id": emp_id,
-                    "chain_of_command": coc_record
+                    "chain_of_command": new_coc
                 }
                 db.chain_of_command.insert(coc_record)
         else:

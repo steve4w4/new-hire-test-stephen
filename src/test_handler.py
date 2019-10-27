@@ -173,7 +173,6 @@ John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
     assert(john_chain_of_command["chain_of_command"][0] == brad["_id"])
 
 
-
 @dummy_data_decorator
 def test_invalid_date():
     '''
@@ -204,3 +203,46 @@ John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
     assert(brad["hire_date"] == datetime.datetime(2010, 2, 10))
     assert(brad["salary"] == 100000)
     assert(brad["name"] == "Bradley Jones")
+
+
+
+@dummy_data_decorator
+def test_chain_of_command_multi_level():
+    '''
+    This test should create a fourth employee, Stephen, who works
+    under John Smith, to demonstrate the multi level chain of command
+    '''
+
+    body = '''Name,Email,Manager,Salary,Hire Date
+Bradley Jones,bjones@performyard.com,,100000,NOT A DATE
+John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
+Stephen White,swhite@performyard.com,jsmith@performyard.com,99999,10/27/2019
+'''
+
+    response = handle_csv_upload(body, {})
+    assert(response["statusCode"] == 200)
+    body = json.loads(response["body"])
+
+    # Check the response counts
+    assert(body["numCreated"] == 2)
+    assert(body["numUpdated"] == 1)
+    assert(len(body["errors"]) == 1)
+
+    # Check that we added the correct number of users
+    assert(db.user.count() == 4)
+    assert(db.chain_of_command.count() == 4)
+
+    # Check that Stephen's record was created
+    steve = db.user.find_one({"normalized_email": "swhite@performyard.com"})
+    assert(steve["hire_date"] == datetime.datetime(2019, 10, 27))
+    assert(steve["salary"] == 99999)
+    assert(steve["name"] == "Stephen White")
+
+    # Check that Stephen's manager and skiplevel are John and Brad respectively
+    john = db.user.find_one({"normalized_email": "jsmith@performyard.com"})
+    brad = db.user.find_one({"normalized_email": "bjones@performyard.com"})
+    steve_chain_of_command = db.chain_of_command.find_one(
+        {"user_id": steve["_id"]})
+    assert(len(steve_chain_of_command["chain_of_command"]) == 2)
+    assert(steve_chain_of_command["chain_of_command"][0] == john["_id"])
+    assert(steve_chain_of_command["chain_of_command"][1] == brad["_id"])
