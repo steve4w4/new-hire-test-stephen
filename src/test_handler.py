@@ -9,7 +9,7 @@ from bson import ObjectId
 def dummy_data_decorator(test_function):
     def f():
         '''
-          Drop any existing data and fill in some dummy test data,
+        Drop any existing data and fill in some dummy test data,
         as well as creating indexes; the data will be dropped after
         the test as well
         '''
@@ -203,7 +203,6 @@ John Smith,jsmith@performyard.com,bjones@performyard.com,80000,07/16/2018
     assert(brad["hire_date"] == datetime.datetime(2010, 2, 10))
     assert(brad["salary"] == 100000)
     assert(brad["name"] == "Bradley Jones")
-
 
 
 @dummy_data_decorator
